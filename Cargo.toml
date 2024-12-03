@@ -1,0 +1,16 @@
+[package]
+name = "shuttlings-cch24"
+version = "0.1.0"
+edition = "2021"
+description = "Solutions for the Shuttle Christmas Code Hunt 2024"
+authors = ["Jeffery D. Mitchell", "<sentinel1909@jeff-mitchell.dev>"]
+readme = "README.md"
+repository = "https://github.com/sentinel1909/shuttlings-cch24.git"
+license = "MIT"
+publish = false
+
+[dependencies]
+axum = "0.7.9"
+shuttle-axum = "0.49.0"
+shuttle-runtime = "0.49.0"
+tokio = "1.41.1"
