@@ -1,36 +1,34 @@
-// src/main.rs
+// src/lib/routes/routes.rs
 
 // dependencies
 use axum::{
     extract::Query,
     http::{header, HeaderMap, StatusCode},
     response::IntoResponse,
-    routing::get,
-    Router,
 };
 use serde::Deserialize;
 
 // struct type to represent the Query parameters for Day 2, Task 1
 #[derive(Deserialize)]
-struct InputDay2Task1 {
-    from: String,
-    key: String,
+pub struct InputDay2Task1 {
+    pub from: String,
+    pub key: String,
 }
 
 // struct type to represent the Query parameters for Day2, Task 2
 #[derive(Deserialize)]
-struct InputDay2Task2 {
-    from: String,
-    to: String,
+pub struct InputDay2Task2 {
+    pub from: String,
+    pub to: String,
 }
 
 // Day -1, Task 1 handler
-async fn dayminus1_task1() -> impl IntoResponse {
+pub async fn dayminus1_task1() -> impl IntoResponse {
     "Hello, bird!"
 }
 
 // Day -1, Task 2 handler
-async fn dayminus1_task2() -> impl IntoResponse {
+pub async fn dayminus1_task2() -> impl IntoResponse {
     let mut headers = HeaderMap::new();
     headers.insert(
         header::LOCATION,
@@ -42,7 +40,7 @@ async fn dayminus1_task2() -> impl IntoResponse {
 }
 
 // Day 2, Task 1 handler
-async fn day2_task1(params: Query<InputDay2Task1>) -> impl IntoResponse {
+pub async fn day2_task1(params: Query<InputDay2Task1>) -> impl IntoResponse {
     let input = params.0;
     let from = input.from;
     let key = input.key;
@@ -71,7 +69,7 @@ async fn day2_task1(params: Query<InputDay2Task1>) -> impl IntoResponse {
 }
 
 // Day 2, Task 2 handler
-async fn day2_task2(params: Query<InputDay2Task2>) -> impl IntoResponse {
+pub async fn day2_task2(params: Query<InputDay2Task2>) -> impl IntoResponse {
     let input = params.0;
     let from = input.from;
     let to = input.to;
@@ -97,15 +95,4 @@ async fn day2_task2(params: Query<InputDay2Task2>) -> impl IntoResponse {
     }
 
     key_str
-}
-
-// main function
-#[shuttle_runtime::main]
-async fn main() -> shuttle_axum::ShuttleAxum {
-    let router = Router::new()
-        .route("/", get(dayminus1_task1))
-        .route("/-1/seek", get(dayminus1_task2))
-        .route("/2/dest", get(day2_task1))
-        .route("/2/key", get(day2_task2));
-    Ok(router.into())
 }
