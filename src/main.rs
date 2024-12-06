@@ -12,9 +12,16 @@ use serde::Deserialize;
 
 // struct type to represent the Query parameters for Day 2, Task 1
 #[derive(Deserialize)]
-struct Address {
+struct InputDay2Task1 {
     from: String,
     key: String,
+}
+
+// struct type to represent the Query parameters for Day2, Task 2
+#[derive(Deserialize)]
+struct InputDay2Task2 {
+    from: String,
+    to: String,
 }
 
 // Day -1, Task 1 handler
@@ -35,10 +42,10 @@ async fn dayminus1_task2() -> impl IntoResponse {
 }
 
 // Day 2, Task 1 handler
-async fn day2_task1(address: Query<Address>) -> impl IntoResponse {
-    let address: Address = address.0;
-    let from = address.from;
-    let key = address.key;
+async fn day2_task1(params: Query<InputDay2Task1>) -> impl IntoResponse {
+    let input = params.0;
+    let from = input.from;
+    let key = input.key;
 
     let from_octets: Vec<_> = from.split(".").map(|o| o.parse::<u8>().unwrap()).collect();
 
@@ -63,12 +70,42 @@ async fn day2_task1(address: Query<Address>) -> impl IntoResponse {
     dest_str
 }
 
+// Day 2, Task 2 handler
+async fn day2_task2(params: Query<InputDay2Task2>) -> impl IntoResponse {
+    let input = params.0;
+    let from = input.from;
+    let to = input.to;
+
+    let from_octets: Vec<_> = from.split(".").map(|o| o.parse::<u8>().unwrap()).collect();
+
+    let to_octets: Vec<_> = to.split(".").map(|k| k.parse::<u8>().unwrap()).collect();
+    let mut key: Vec<u8> = Vec::new();
+
+    for (i, item) in to_octets.iter().enumerate() {
+        let (diff, _) = item.overflowing_sub(from_octets[i]);
+        key.push(diff);
+    }
+
+    let mut key_str = String::new();
+
+    for (i, item) in key.iter().enumerate() {
+        key_str.push_str(&item.to_string());
+
+        if i < key.len() - 1 {
+            key_str.push('.');
+        }
+    }
+
+    key_str
+}
+
 // main function
 #[shuttle_runtime::main]
 async fn main() -> shuttle_axum::ShuttleAxum {
     let router = Router::new()
         .route("/", get(dayminus1_task1))
         .route("/-1/seek", get(dayminus1_task2))
-        .route("/2/dest", get(day2_task1));
+        .route("/2/dest", get(day2_task1))
+        .route("/2/key", get(day2_task2));
     Ok(router.into())
 }
