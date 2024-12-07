@@ -6,6 +6,7 @@ use axum::{
     http::{header, HeaderMap, StatusCode},
     response::IntoResponse,
 };
+use axum_macros::{self, debug_handler};
 use serde::Deserialize;
 
 // struct type to represent the Query parameters for Day 2, Task 1
@@ -23,11 +24,15 @@ pub struct InputDay2Task2 {
 }
 
 // Day -1, Task 1 handler
+#[debug_handler]
+#[tracing::instrument(name = "Day Minus 1, Task 1")]
 pub async fn dayminus1_task1() -> impl IntoResponse {
-    "Hello, bird!"
+    "Hello, bird!".to_string()
 }
 
 // Day -1, Task 2 handler
+#[debug_handler]
+#[tracing::instrument(name = "Day Minus 1, Task 2")]
 pub async fn dayminus1_task2() -> impl IntoResponse {
     let mut headers = HeaderMap::new();
     headers.insert(
@@ -40,6 +45,8 @@ pub async fn dayminus1_task2() -> impl IntoResponse {
 }
 
 // Day 2, Task 1 handler
+#[debug_handler]
+#[tracing::instrument(name = "Day 2, Task 1" skip(params))]
 pub async fn day2_task1(params: Query<InputDay2Task1>) -> impl IntoResponse {
     let input = params.0;
     let from = input.from;
@@ -69,6 +76,8 @@ pub async fn day2_task1(params: Query<InputDay2Task1>) -> impl IntoResponse {
 }
 
 // Day 2, Task 2 handler
+#[debug_handler]
+#[tracing::instrument(name = "Day 2, Task 2", skip(params))]
 pub async fn day2_task2(params: Query<InputDay2Task2>) -> impl IntoResponse {
     let input = params.0;
     let from = input.from;
