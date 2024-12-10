@@ -39,7 +39,7 @@ struct Package {
 #[derive(Debug, Deserialize)]
 struct Metadata {
     #[serde(with = "serde_toml_value")]
-    orders: Vec<toml::Value>, // Deserialize orders as generic TOML values
+    orders: Vec<toml::Value>, 
 }
 
 // Day 5, Task 1 handler

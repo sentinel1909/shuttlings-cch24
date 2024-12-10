@@ -3,9 +3,27 @@
 // dependencies
 use reqwest::Client;
 use shuttlings_cch24::Application;
+use shuttlings_cch24::telemetry::{get_subscriber, init_subscriber};
+use std::env::var;
+use std::io::{sink, stdout};
 use std::net::TcpListener;
+use std::sync::LazyLock;
+
+// static constant which creates one instance of tracing
+static TRACING: LazyLock<()> = LazyLock::new(|| {
+    let default_filter_level = "info".to_string();
+    let subscriber_name = "test".to_string();
+    if var("TEST_LOG").is_ok() {
+        let subscriber = get_subscriber(subscriber_name, default_filter_level, stdout);
+        init_subscriber(subscriber);
+    } else {
+        let subscriber = get_subscriber(subscriber_name, default_filter_level, sink);
+        init_subscriber(subscriber);
+    }
+});
 
 // struct type which models a test application
+#[allow(dead_code)]
 pub struct TestApp {
     pub application_address: String,
     pub application_port: u16,
@@ -13,6 +31,9 @@ pub struct TestApp {
 }
 
 pub async fn spawn_app() -> TestApp {
+    // setup tracing
+    LazyLock::force(&TRACING);
+
     // build the app for testing
     let application = Application::build();
     let listener = TcpListener::bind("localhost:0").expect("Failed to bind port.");
