@@ -1,11 +1,7 @@
-// src/lib/routes/routes.rs
+// src/lib/routes/day2.rs
 
 // dependencies
-use axum::{
-    extract::Query,
-    http::{header, HeaderMap, StatusCode},
-    response::IntoResponse,
-};
+use axum::{extract::Query, response::IntoResponse};
 use axum_macros::{self, debug_handler};
 use serde::Deserialize;
 
@@ -21,27 +17,6 @@ pub struct InputDay2Task1 {
 pub struct InputDay2Task2 {
     pub from: String,
     pub to: String,
-}
-
-// Day -1, Task 1 handler
-#[debug_handler]
-#[tracing::instrument(name = "Day Minus 1, Task 1")]
-pub async fn dayminus1_task1() -> impl IntoResponse {
-    "Hello, bird!".to_string()
-}
-
-// Day -1, Task 2 handler
-#[debug_handler]
-#[tracing::instrument(name = "Day Minus 1, Task 2")]
-pub async fn dayminus1_task2() -> impl IntoResponse {
-    let mut headers = HeaderMap::new();
-    headers.insert(
-        header::LOCATION,
-        "https://www.youtube.com/watch?v=9Gc4QTqslN4"
-            .parse()
-            .unwrap(),
-    );
-    (headers, StatusCode::FOUND)
 }
 
 // Day 2, Task 1 handler

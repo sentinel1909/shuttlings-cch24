@@ -1,9 +1,17 @@
 // src/lib/startup.rs
 
 // dependencies
-use crate::routes::handlers::{day2_task1, day2_task2, dayminus1_task1, dayminus1_task2};
+use crate::routes::day2::{day2_task1, day2_task2};
+use crate::routes::day5::day5_task1;
+use crate::routes::day_minus_one::{day_minus_one_task1, day_minus_one_task2};
 use crate::telemetry::MakeRequestUuid;
-use axum::{http::HeaderName, routing::get, Router};
+use axum::{
+    http::HeaderName,
+    routing::{get, post},
+    Router,
+};
+use std::net::SocketAddr;
+use tokio::net::TcpListener;
 use tower::ServiceBuilder;
 use tower_http::{
     request_id::{PropagateRequestIdLayer, SetRequestIdLayer},
@@ -27,12 +35,13 @@ impl Application {
                     .level(Level::INFO),
             )
             .on_response(DefaultOnResponse::new().include_headers(true));
-            let x_request_id = HeaderName::from_static("x-request-id");
+        let x_request_id = HeaderName::from_static("x-request-id");
         let router = Router::new()
-            .route("/", get(dayminus1_task1))
-            .route("/-1/seek", get(dayminus1_task2))
+            .route("/", get(day_minus_one_task1))
+            .route("/-1/seek", get(day_minus_one_task2))
             .route("/2/dest", get(day2_task1))
             .route("/2/key", get(day2_task2))
+            .route("/5/manifest", post(day5_task1))
             .layer(
                 ServiceBuilder::new()
                     .layer(SetRequestIdLayer::new(
@@ -43,5 +52,11 @@ impl Application {
                     .layer(PropagateRequestIdLayer::new(x_request_id)),
             );
         Self(router)
+    }
+
+    // utility function to run the application until stopped, to facilitate testing
+    pub async fn run_until_stopped(self, addr: SocketAddr) {
+        let listener = TcpListener::bind(addr).await.unwrap();
+        axum::serve(listener, self.0).await.unwrap();
     }
 }
