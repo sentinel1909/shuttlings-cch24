@@ -1,12 +1,11 @@
 // src/lib/routes/day5.rs
 
-use std::str::FromStr;
-
 // dependencies
 use axum::{http::StatusCode, response::IntoResponse};
 use axum_macros::debug_handler;
 use cargo_manifest::Manifest;
 use serde::Deserialize;
+use std::str::FromStr;
 
 // module which enables finer grained deserialization of toml values
 mod serde_toml_value {
@@ -56,7 +55,7 @@ pub async fn day5_task1(body: String) -> impl IntoResponse {
 
     let package = match manifest.package {
         Some(pkg) => pkg,
-        None => return Err((StatusCode::BAD_REQUEST, "Invalid package format").into_response())
+        None => return Err((StatusCode::BAD_REQUEST, "Invalid package format").into_response()),
     };
 
     let keywords = match package.keywords {
@@ -72,7 +71,7 @@ pub async fn day5_task1(body: String) -> impl IntoResponse {
     if !keywords.iter().any(|keyword| keyword == "Christmas 2024") {
         return Err((StatusCode::BAD_REQUEST, "Magic keyword not provided").into_response());
     }
-    
+
     let parsed: Result<GiftOrder, _> = toml::from_str(&body);
     if let Ok(parsed) = parsed {
         let valid_orders: Vec<String> = parsed
@@ -89,11 +88,11 @@ pub async fn day5_task1(body: String) -> impl IntoResponse {
             .collect();
 
         if valid_orders.is_empty() {
-            return Err(StatusCode::NO_CONTENT.into_response())
+            return Err(StatusCode::NO_CONTENT.into_response());
         } else {
             Ok(valid_orders.join("\n").into_response())
         }
     } else {
-        return Err(StatusCode::NO_CONTENT.into_response())
+        return Err(StatusCode::NO_CONTENT.into_response());
     }
 }

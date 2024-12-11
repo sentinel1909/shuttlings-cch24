@@ -3,7 +3,7 @@
 // dependencies
 use reqwest::Client;
 use shuttlings_cch24::telemetry::{get_subscriber, init_subscriber};
-use shuttlings_cch24::Application;
+use shuttlings_cch24::{AppState, Application};
 use std::env::var;
 use std::io::{sink, stdout};
 use std::net::TcpListener;
@@ -35,7 +35,8 @@ pub async fn spawn_app() -> TestApp {
     LazyLock::force(&TRACING);
 
     // build the app for testing
-    let application = Application::build();
+    let app_state = AppState::default();
+    let application = Application::build(app_state);
     let listener = TcpListener::bind("localhost:0").expect("Failed to bind port.");
     let addr = listener.local_addr().unwrap();
     let port = addr.port();

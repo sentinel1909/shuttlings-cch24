@@ -19,6 +19,12 @@ use tower_http::{
 };
 use tracing::Level;
 
+// struct type to represent application state
+#[derive(Debug, Default, Clone)]
+pub struct AppState {
+    milk_bucket: f32,
+}
+
 // struct type to represent the Shuttlings CCH24 application
 #[derive(Debug, Clone)]
 pub struct Application(pub Router);
@@ -26,7 +32,7 @@ pub struct Application(pub Router);
 // methods for the Application type
 impl Application {
     // function to build and return a router type, configured with all the necessary routes and handlers
-    pub fn build() -> Self {
+    pub fn build(state: AppState) -> Self {
         // define the tracing layer
         let trace_layer = TraceLayer::new_for_http()
             .make_span_with(
@@ -42,6 +48,7 @@ impl Application {
             .route("/2/dest", get(day2_task1))
             .route("/2/key", get(day2_task2))
             .route("/5/manifest", post(day5_task1))
+            .with_state(state)
             .layer(
                 ServiceBuilder::new()
                     .layer(SetRequestIdLayer::new(

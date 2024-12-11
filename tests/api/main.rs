@@ -3,5 +3,6 @@
 // module declarations
 mod day2;
 mod day5;
+mod day9;
 mod day_minus_one;
 mod helpers;
