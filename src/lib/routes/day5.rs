@@ -1,8 +1,11 @@
 // src/lib/routes/day5.rs
 
+use std::str::FromStr;
+
 // dependencies
 use axum::{http::StatusCode, response::IntoResponse};
 use axum_macros::debug_handler;
+use cargo_manifest::Manifest;
 use serde::Deserialize;
 
 // module which enables finer grained deserialization of toml values
@@ -46,6 +49,16 @@ struct Metadata {
 #[debug_handler]
 #[tracing::instrument(name = "Day 5, Task 1", skip(body))]
 pub async fn day5_task1(body: String) -> impl IntoResponse {
+    
+    // use cargo-manifest to validate the incoming body string, which contains a manifest
+    // invalid manifests are rejected and a 400 Bad Request with body "Invalid manifest"
+    // is returned
+    if let Err(e) = Manifest::from_str(&body) {
+        tracing::error!("Validation of incoming manifest failed: {}", e);
+        return (StatusCode::BAD_REQUEST, "Invalid manifest").into_response();
+    }
+
+    // parse the valid manifest
     let parsed: Result<GiftOrder, _> = toml::from_str(&body);
     if let Ok(parsed) = parsed {
         let valid_orders: Vec<String> = parsed
