@@ -42,23 +42,37 @@ struct Package {
 #[derive(Debug, Deserialize)]
 struct Metadata {
     #[serde(with = "serde_toml_value")]
-    orders: Vec<toml::Value>, 
+    orders: Vec<toml::Value>,
 }
 
 // Day 5, Task 1 handler
 #[debug_handler]
 #[tracing::instrument(name = "Day 5, Task 1", skip(body))]
 pub async fn day5_task1(body: String) -> impl IntoResponse {
-    
-    // use cargo-manifest to validate the incoming body string, which contains a manifest
-    // invalid manifests are rejected and a 400 Bad Request with body "Invalid manifest"
-    // is returned
-    if let Err(e) = Manifest::from_str(&body) {
-        tracing::error!("Validation of incoming manifest failed: {}", e);
-        return (StatusCode::BAD_REQUEST, "Invalid manifest").into_response();
-    }
+    let manifest = match Manifest::from_str(&body) {
+        Ok(mfst) => mfst,
+        Err(_) => return Err((StatusCode::BAD_REQUEST, "Invalid manifest").into_response()),
+    };
 
-    // parse the valid manifest
+    let package = match manifest.package {
+        Some(pkg) => pkg,
+        None => return Err((StatusCode::BAD_REQUEST, "Invalid package format").into_response())
+    };
+
+    let keywords = match package.keywords {
+        Some(kw) => kw,
+        None => return Err((StatusCode::BAD_REQUEST, "Magic keyword not provided").into_response()),
+    };
+
+    let keywords = match keywords.as_local() {
+        Some(kw) => kw,
+        None => return Err((StatusCode::BAD_REQUEST, "Invalid keywords format").into_response()),
+    };
+
+    if !keywords.iter().any(|keyword| keyword == "Christmas 2024") {
+        return Err((StatusCode::BAD_REQUEST, "Magic keyword not provided").into_response());
+    }
+    
     let parsed: Result<GiftOrder, _> = toml::from_str(&body);
     if let Ok(parsed) = parsed {
         let valid_orders: Vec<String> = parsed
@@ -75,11 +89,11 @@ pub async fn day5_task1(body: String) -> impl IntoResponse {
             .collect();
 
         if valid_orders.is_empty() {
-            StatusCode::NO_CONTENT.into_response()
+            return Err(StatusCode::NO_CONTENT.into_response())
         } else {
-            valid_orders.join("\n").into_response()
+            Ok(valid_orders.join("\n").into_response())
         }
     } else {
-        StatusCode::NO_CONTENT.into_response()
+        return Err(StatusCode::NO_CONTENT.into_response())
     }
 }

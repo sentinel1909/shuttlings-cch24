@@ -2,8 +2,8 @@
 
 // dependencies
 use reqwest::Client;
-use shuttlings_cch24::Application;
 use shuttlings_cch24::telemetry::{get_subscriber, init_subscriber};
+use shuttlings_cch24::Application;
 use std::env::var;
 use std::io::{sink, stdout};
 use std::net::TcpListener;
