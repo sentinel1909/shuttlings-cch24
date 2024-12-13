@@ -28,6 +28,7 @@ pub struct TestApp {
     pub application_address: String,
     pub application_port: u16,
     pub application_client: Client,
+    pub application_state: AppState,
 }
 
 pub async fn spawn_app() -> TestApp {
@@ -35,8 +36,8 @@ pub async fn spawn_app() -> TestApp {
     LazyLock::force(&TRACING);
 
     // build the app for testing
-    let app_state = AppState::default();
-    let application = Application::build(app_state);
+    let app_state = AppState::new(5, 1);
+    let application = Application::build(app_state.clone());
     let listener = TcpListener::bind("localhost:0").expect("Failed to bind port.");
     let addr = listener.local_addr().unwrap();
     let port = addr.port();
@@ -54,5 +55,7 @@ pub async fn spawn_app() -> TestApp {
         application_address: format!("http://localhost:{}", port),
         application_port: port,
         application_client: client,
+        application_state: app_state,
+
     }
 }

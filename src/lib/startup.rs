@@ -3,6 +3,7 @@
 // dependencies
 use crate::routes::day2::{day2_task1, day2_task2};
 use crate::routes::day5::day5_task1;
+use crate::routes::day9::day9_task1;
 use crate::routes::day_minus_one::{day_minus_one_task1, day_minus_one_task2};
 use crate::telemetry::MakeRequestUuid;
 use axum::{
@@ -10,8 +11,12 @@ use axum::{
     routing::{get, post},
     Router,
 };
+use leaky_bucket::RateLimiter;
 use std::net::SocketAddr;
+use std::sync::Arc;
 use tokio::net::TcpListener;
+use tokio::sync::Mutex;
+use tokio::time::Duration;
 use tower::ServiceBuilder;
 use tower_http::{
     request_id::{PropagateRequestIdLayer, SetRequestIdLayer},
@@ -20,9 +25,24 @@ use tower_http::{
 use tracing::Level;
 
 // struct type to represent application state
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct AppState {
-    milk_bucket: f32,
+    pub rate_limiter: Arc<Mutex<RateLimiter>>,
+}
+
+// methods for the AppState type
+impl AppState {
+    pub fn new(max: usize, refill: u64) -> Self {
+        let rate_limiter = RateLimiter::builder()
+            .initial(max)
+            .max(max)
+            .interval(Duration::from_secs(refill))
+            .build();
+
+        Self {
+            rate_limiter: Arc::new(Mutex::new(rate_limiter)),
+        }
+    }
 }
 
 // struct type to represent the Shuttlings CCH24 application
@@ -48,6 +68,7 @@ impl Application {
             .route("/2/dest", get(day2_task1))
             .route("/2/key", get(day2_task2))
             .route("/5/manifest", post(day5_task1))
+            .route("/9/milk", post(day9_task1))
             .with_state(state)
             .layer(
                 ServiceBuilder::new()
