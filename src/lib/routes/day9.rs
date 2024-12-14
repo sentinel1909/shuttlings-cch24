@@ -13,6 +13,8 @@ use axum_macros::debug_handler;
 use serde::Deserialize;
 use serde_json::json;
 
+const LITERS_TO_GALLONS: f32 = 3.78541;
+
 // enum type to represent units
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -39,11 +41,11 @@ pub async fn day9_tasks(
             match payload {
                 Ok(value) => match value.0 {
                     Units::Liters(quantity) => {
-                        let gallons = quantity / 3.785;
+                        let gallons = quantity / LITERS_TO_GALLONS;
                         return (StatusCode::OK, Json(json!({"gallons": gallons}))).into_response();
                     }
                     Units::Gallons(quantity) => {
-                        let liters = quantity * 3.785;
+                        let liters = quantity * LITERS_TO_GALLONS;
                         return (StatusCode::OK, Json(json!({"liters": liters}))).into_response();
                     }
                 },

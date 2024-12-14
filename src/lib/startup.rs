@@ -23,7 +23,6 @@ use tower_http::{
     trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer},
 };
 use tracing::Level;
-
 // struct type to represent application state
 #[derive(Debug, Clone)]
 pub struct AppState {
