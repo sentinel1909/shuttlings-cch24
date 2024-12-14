@@ -14,6 +14,7 @@ use serde::Deserialize;
 use serde_json::json;
 
 const LITERS_TO_GALLONS: f32 = 3.78541;
+const LITRES_TO_PINTS: f32 = 1.759754;
 
 // enum type to represent units
 #[derive(Debug, Deserialize)]
@@ -21,6 +22,8 @@ const LITERS_TO_GALLONS: f32 = 3.78541;
 pub enum Units {
     Liters(f32),
     Gallons(f32),
+    Pints(f32),
+    Litres(f32),
 }
 
 // Day 9, Task 1 handler
@@ -47,6 +50,14 @@ pub async fn day9_tasks(
                     Units::Gallons(quantity) => {
                         let liters = quantity * LITERS_TO_GALLONS;
                         return (StatusCode::OK, Json(json!({"liters": liters}))).into_response();
+                    }
+                    Units::Litres(quantity) => {
+                        let pints = quantity * LITRES_TO_PINTS;
+                        return (StatusCode::OK, Json(json!({"pints": pints}))).into_response();
+                    }
+                    Units::Pints(quantity) => {
+                        let litres = quantity / LITRES_TO_PINTS;
+                        return (StatusCode::OK, Json(json!({"litres": litres}))).into_response();
                     }
                 },
                 Err(_) => return (StatusCode::BAD_REQUEST).into_response(),
