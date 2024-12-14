@@ -56,6 +56,5 @@ pub async fn spawn_app() -> TestApp {
         application_port: port,
         application_client: client,
         application_state: app_state,
-
     }
 }

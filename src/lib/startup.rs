@@ -3,7 +3,7 @@
 // dependencies
 use crate::routes::day2::{day2_task1, day2_task2};
 use crate::routes::day5::day5_task1;
-use crate::routes::day9::day9_task1;
+use crate::routes::day9::day9_tasks;
 use crate::routes::day_minus_one::{day_minus_one_task1, day_minus_one_task2};
 use crate::telemetry::MakeRequestUuid;
 use axum::{
@@ -68,7 +68,7 @@ impl Application {
             .route("/2/dest", get(day2_task1))
             .route("/2/key", get(day2_task2))
             .route("/5/manifest", post(day5_task1))
-            .route("/9/milk", post(day9_task1))
+            .route("/9/milk", post(day9_tasks))
             .with_state(state)
             .layer(
                 ServiceBuilder::new()
