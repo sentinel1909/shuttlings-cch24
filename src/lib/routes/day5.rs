@@ -21,13 +21,13 @@ mod serde_toml_value {
     }
 }
 
-// struct to represent an incoming order
+// Day 5 data structure - struct type to represent an incoming order
 #[derive(Deserialize)]
 struct GiftOrder {
     package: Package,
 }
 
-// struct type to represent a package
+// Day 5 data structure - struct type to represent a package
 #[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 struct Package {
@@ -37,16 +37,16 @@ struct Package {
     metadata: Metadata,
 }
 
-// struct type to represent an order
+// Day 5 data structure - struct type to represent an order metadata
 #[derive(Debug, Deserialize)]
 struct Metadata {
     #[serde(with = "serde_toml_value")]
     orders: Vec<toml::Value>,
 }
 
-// Day 5, Task 1 handler
+// Day 5 Tasks handler
 #[debug_handler]
-#[tracing::instrument(name = "Day 5, Task 1", skip(body))]
+#[tracing::instrument(name = "Day 5 Tasks Handler", skip(body))]
 pub async fn day5_task1(body: String) -> impl IntoResponse {
     let manifest = match Manifest::from_str(&body) {
         Ok(mfst) => mfst,

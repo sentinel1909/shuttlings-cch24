@@ -12,8 +12,10 @@ async fn main() -> shuttle_axum::ShuttleAxum {
     init_subscriber(subscriber);
 
     // initialize the application state
-    // application state currently holds: milk bucket quantity and refill rate for Day 9
-    let app_state = AppState::new(5, 1);
+    // application state currently holds: milk bucket volume and refill rate for Day 9
+    let milk_bucket_max_volume = 5; // max milk bucket volume, in gallons
+    let milk_refill_rate = 1; // milk bucket refill rate, in gallons
+    let app_state = AppState::new(milk_bucket_max_volume, milk_refill_rate);
 
     // build the application
     let app = Application::build(app_state);

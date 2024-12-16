@@ -1,6 +1,8 @@
 // src/lib/startup.rs
 
 // dependencies
+use crate::routes::day12::Board;
+use crate::routes::day12::{day12_get_board_state, day12_post_reset_board};
 use crate::routes::day2::{day2_task1, day2_task2};
 use crate::routes::day5::day5_task1;
 use crate::routes::day9::day9_tasks;
@@ -11,11 +13,12 @@ use axum::{
     routing::{get, post},
     Router,
 };
+use axum_macros::FromRef;
 use leaky_bucket::RateLimiter;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tokio::net::TcpListener;
-use tokio::sync::Mutex;
+use tokio::sync::RwLock;
 use tokio::time::Duration;
 use tower::ServiceBuilder;
 use tower_http::{
@@ -24,9 +27,10 @@ use tower_http::{
 };
 use tracing::Level;
 // struct type to represent application state
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, FromRef)]
 pub struct AppState {
-    pub rate_limiter: Arc<Mutex<RateLimiter>>,
+    pub rate_limiter: Arc<RwLock<RateLimiter>>,
+    pub game_board: Arc<RwLock<Board>>,
 }
 
 // methods for the AppState type
@@ -38,8 +42,11 @@ impl AppState {
             .interval(Duration::from_secs(refill))
             .build();
 
+        let game_board = Board::default();
+
         Self {
-            rate_limiter: Arc::new(Mutex::new(rate_limiter)),
+            rate_limiter: Arc::new(RwLock::new(rate_limiter)),
+            game_board: Arc::new(RwLock::new(game_board)),
         }
     }
 }
@@ -68,6 +75,8 @@ impl Application {
             .route("/2/key", get(day2_task2))
             .route("/5/manifest", post(day5_task1))
             .route("/9/milk", post(day9_tasks))
+            .route("/12/board", get(day12_get_board_state))
+            .route("/12/reset", post(day12_post_reset_board))
             .with_state(state)
             .layer(
                 ServiceBuilder::new()

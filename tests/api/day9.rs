@@ -27,7 +27,7 @@ async fn day_9_task1_returns_429_too_many_requests_if_bucket_empty() {
     let app = spawn_app().await;
 
     {
-        let rate_limiter = app.application_state.rate_limiter.lock().await;
+        let rate_limiter = app.application_state.rate_limiter.read().await;
         while rate_limiter.try_acquire(1) {}
     }
 

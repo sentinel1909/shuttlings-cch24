@@ -13,10 +13,15 @@ use axum_macros::debug_handler;
 use serde::Deserialize;
 use serde_json::json;
 
+// common conversion factors
 const LITERS_TO_GALLONS: f32 = 3.78541;
 const LITRES_TO_PINTS: f32 = 1.759754;
 
-// enum type to represent units
+// type aliases
+type JsonPayload = Result<Json<Units>, JsonRejection>;
+type RequestContentType = Option<TypedHeader<ContentType>>;
+
+// Day 9 data structure - enum type to represent units
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Units {
@@ -31,10 +36,10 @@ pub enum Units {
 #[tracing::instrument(name = "Day 9, Tasks Handler", skip(state, payload))]
 pub async fn day9_tasks(
     State(state): State<AppState>,
-    content_type: Option<TypedHeader<ContentType>>,
-    payload: Result<Json<Units>, JsonRejection>,
+    content_type: RequestContentType,
+    payload: JsonPayload,
 ) -> impl IntoResponse {
-    let rate_limiter = state.rate_limiter.lock().await;
+    let rate_limiter = state.rate_limiter.read().await;
     let milk_bucket = rate_limiter.try_acquire(1);
     if !milk_bucket {
         return (StatusCode::TOO_MANY_REQUESTS, "No milk available\n").into_response();
