@@ -10,6 +10,7 @@ use axum::{
 use axum_macros::debug_handler;
 use serde::Deserialize;
 use std::fmt;
+use std::str::FromStr;
 
 // Day 12 data structure - the game board, consists of a 5 x 6 grid, where the grid cells
 // are an enum type, playable area of the grid is 4x4
@@ -119,6 +120,20 @@ pub enum Team {
     Cookie,
 }
 
+// implement the FromStr trait for the Team type, used to convert the path team path paramter into
+// the Team enum type
+impl FromStr for Team {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "cooke" => Ok(Team::Cookie),
+            "milk" => Ok(Team::Milk),
+            _ => Err(()),
+        }
+    }
+}
+
 // helper function to determine the game status
 fn check_game_progression(board: &Board) -> Status {
     todo!()
@@ -146,14 +161,18 @@ pub async fn day12_post_reset_board(State(state): State<AppState>) -> impl IntoR
 #[tracing::instrument(name = "Day 12 Task 2 Handler - Make a Move", skip(state))]
 pub async fn day12_post_make_move(
     State(state): State<AppState>,
-    path_params: Option<Path<(Team, usize)>>,
+    Path(path): Path<(String, String)>,
 ) -> impl IntoResponse {
-    let Path((team, column)) = match path_params {
-        Some(params) => params,
-        None => {
-            return (StatusCode::BAD_REQUEST).into_response();
-        }
+    let team = match Team::from_str(&path.0) {
+        Ok(team) => team,
+        Err(_) => return (StatusCode::BAD_REQUEST).into_response(),
     };
+
+    let column: usize = match path.1.parse::<usize>() {
+        Ok(num) if (1..=4).contains(&num) => num,
+        _ => return (StatusCode::BAD_REQUEST).into_response(),
+    };
+
     let game = state.game.read().await;
 
     match check_game_progression(&game.board) {

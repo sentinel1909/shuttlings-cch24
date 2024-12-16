@@ -77,7 +77,7 @@ impl Application {
             .route("/9/milk", post(day9_tasks))
             .route("/12/board", get(day12_get_board_state))
             .route("/12/reset", post(day12_post_reset_board))
-            .route("/12/place/:team/:column", get(day12_post_make_move))
+            .route("/12/place/:team/:column", post(day12_post_make_move))
             .with_state(state)
             .layer(
                 ServiceBuilder::new()
