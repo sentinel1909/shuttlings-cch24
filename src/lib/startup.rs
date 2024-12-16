@@ -1,8 +1,8 @@
 // src/lib/startup.rs
 
 // dependencies
-use crate::routes::day12::Board;
-use crate::routes::day12::{day12_get_board_state, day12_post_reset_board};
+use crate::routes::day12::Game;
+use crate::routes::day12::{day12_get_board_state, day12_post_make_move, day12_post_reset_board};
 use crate::routes::day2::{day2_task1, day2_task2};
 use crate::routes::day5::day5_task1;
 use crate::routes::day9::day9_tasks;
@@ -30,7 +30,7 @@ use tracing::Level;
 #[derive(Debug, Clone, FromRef)]
 pub struct AppState {
     pub rate_limiter: Arc<RwLock<RateLimiter>>,
-    pub game_board: Arc<RwLock<Board>>,
+    pub game: Arc<RwLock<Game>>,
 }
 
 // methods for the AppState type
@@ -42,11 +42,11 @@ impl AppState {
             .interval(Duration::from_secs(refill))
             .build();
 
-        let game_board = Board::default();
+        let game = Game::default();
 
         Self {
             rate_limiter: Arc::new(RwLock::new(rate_limiter)),
-            game_board: Arc::new(RwLock::new(game_board)),
+            game: Arc::new(RwLock::new(game)),
         }
     }
 }
@@ -77,6 +77,7 @@ impl Application {
             .route("/9/milk", post(day9_tasks))
             .route("/12/board", get(day12_get_board_state))
             .route("/12/reset", post(day12_post_reset_board))
+            .route("/12/place/:team/:column", get(day12_post_make_move))
             .with_state(state)
             .layer(
                 ServiceBuilder::new()
