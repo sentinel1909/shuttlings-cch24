@@ -2,7 +2,7 @@
 
 // dependencies
 use crate::routes::day12::Game;
-use crate::routes::day12::{day12_get_board_state, day12_post_make_move, day12_post_reset_board};
+use crate::routes::day12::{day12_get_board_state, day12_post_play_game, day12_post_reset_board};
 use crate::routes::day2::{day2_task1, day2_task2};
 use crate::routes::day5::day5_task1;
 use crate::routes::day9::day9_tasks;
@@ -77,7 +77,7 @@ impl Application {
             .route("/9/milk", post(day9_tasks))
             .route("/12/board", get(day12_get_board_state))
             .route("/12/reset", post(day12_post_reset_board))
-            .route("/12/place/:team/:column", post(day12_post_make_move))
+            .route("/12/place/:team/:column", post(day12_post_play_game))
             .with_state(state)
             .layer(
                 ServiceBuilder::new()

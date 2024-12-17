@@ -97,14 +97,23 @@ impl fmt::Display for Cell {
 #[derive(Debug)]
 pub struct Game {
     pub board: Board,
+    pub status: Status,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum Status {
+    Ongoing,
+    Winner(Team),
+    Draw,
 }
 
 // methods for the Game type
 impl Game {
     pub fn new() -> Self {
         let board = Board::default();
+        let status = Status::Ongoing;
 
-        Self { board }
+        Self { board, status }
     }
 }
 
@@ -116,7 +125,7 @@ impl Default for Game {
 }
 
 // Day 12 data structure - an enum type to represent the player teams
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq)]
 pub enum Team {
     Milk,
     Cookie,
@@ -195,7 +204,8 @@ fn check_game_progression(board: &Board) -> Option<Team> {
 #[tracing::instrument(name = "Day 12 Task 1 Handler - Board State", skip(state))]
 pub async fn day12_get_board_state(State(state): State<AppState>) -> impl IntoResponse {
     let game = state.game.read().await;
-    game.board.to_string()
+    let response_body = format! {"{}", game.board};
+    response_body
 }
 
 // Day 12 Task 1 Handler - reset the board to an empty state and return it
@@ -204,13 +214,14 @@ pub async fn day12_get_board_state(State(state): State<AppState>) -> impl IntoRe
 pub async fn day12_post_reset_board(State(state): State<AppState>) -> impl IntoResponse {
     let mut game = state.game.write().await;
     *game = Game::default();
-    game.board.to_string()
+    let response_body = format! {"{}", game.board};
+    response_body
 }
 
 // Day 12 Task 2 Handler - enables teams to make a move
 #[debug_handler]
 #[tracing::instrument(name = "Day 12 Task 2 Handler - Make a Move", skip(state))]
-pub async fn day12_post_make_move(
+pub async fn day12_post_play_game(
     State(state): State<AppState>,
     Path(path): Path<(String, String)>,
 ) -> impl IntoResponse {
@@ -226,16 +237,39 @@ pub async fn day12_post_make_move(
 
     let mut game = state.game.write().await;
 
+    match &game.status {
+        Status::Winner(winning_team) => {
+            let response_body = format!(
+                "{}\n{} wins!",
+                game.board,
+                if *winning_team == Team::Cookie {
+                    "🍪"
+                } else {
+                    "🥛"
+                }
+            );
+            return (StatusCode::SERVICE_UNAVAILABLE, response_body).into_response();
+        }
+        Status::Draw => {
+            let response_body = format!("{}\nNo winner.", game.board);
+            return (StatusCode::SERVICE_UNAVAILABLE, response_body).into_response();
+        }
+        Status::Ongoing => {}
+    }
+
     if game.board.make_move(team, column).is_err() {
-        return (StatusCode::SERVICE_UNAVAILABLE, game.board.to_string()).into_response();
+        let response_body = format! {"{}", game.board};
+        return (StatusCode::SERVICE_UNAVAILABLE, response_body).into_response();
     }
 
     match check_game_progression(&game.board) {
         Some(Team::Cookie) => {
+            game.status = Status::Winner(Team::Cookie);
             let response_body = format!("{}\n🍪 wins!", game.board);
             return (StatusCode::SERVICE_UNAVAILABLE, response_body).into_response();
         }
         Some(Team::Milk) => {
+            game.status = Status::Winner(Team::Milk);
             let response_body = format!("{}\n🥛 wins!", game.board);
             return (StatusCode::SERVICE_UNAVAILABLE, response_body).into_response();
         }
@@ -248,11 +282,13 @@ pub async fn day12_post_make_move(
                 .all(|&cell| cell != Cell::Empty);
 
             if is_full {
+                game.status = Status::Draw;
                 let response_body = format!("{}\nNo winner.", game.board);
                 return (StatusCode::SERVICE_UNAVAILABLE, response_body).into_response();
             }
         }
     }
 
-    (StatusCode::OK, game.board.to_string()).into_response()
+    let response_body = format!("{}", game.board);
+    (StatusCode::OK, response_body).into_response()
 }
