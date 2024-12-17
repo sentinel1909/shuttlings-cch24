@@ -34,6 +34,22 @@ impl Board {
 
         Self { grid }
     }
+
+    pub fn make_move(&mut self, team: Team, column: usize) -> Result<(), &'static str> {
+        let column_idx = column - 1;
+
+        for row in (0..4).rev() {
+            if let Cell::Empty = self.grid[row][column_idx + 1] {
+                self.grid[row][column_idx + 1] = match team {
+                    Team::Milk => Cell::Milk,
+                    Team::Cookie => Cell::Cookie,
+                };
+                return Ok(());
+            }
+        }
+
+        Err("Column is full.")
+    }
 }
 
 // implement the Default trait for the Board type
@@ -57,7 +73,7 @@ impl fmt::Display for Board {
 }
 
 // Day 12 data structure - an individual cell in the game, grid cells can have 4 variants
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Cell {
     Empty,
     Wall,
@@ -81,20 +97,14 @@ impl fmt::Display for Cell {
 #[derive(Debug)]
 pub struct Game {
     pub board: Board,
-    pub status: Status,
 }
 
 // methods for the Game type
 impl Game {
     pub fn new() -> Self {
         let board = Board::default();
-        let status = Status::Ongoing;
 
-        Self { board, status }
-    }
-
-    pub fn make_move(team: Team, column: usize) -> Self {
-        todo!()
+        Self { board }
     }
 }
 
@@ -103,14 +113,6 @@ impl Default for Game {
     fn default() -> Self {
         Game::new()
     }
-}
-
-// Day 12 data structure - an enum type to represent game progress
-#[derive(Debug)]
-pub enum Status {
-    Winner,
-    Draw,
-    Ongoing,
 }
 
 // Day 12 data structure - an enum type to represent the player teams
@@ -127,7 +129,7 @@ impl FromStr for Team {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "cooke" => Ok(Team::Cookie),
+            "cookie" => Ok(Team::Cookie),
             "milk" => Ok(Team::Milk),
             _ => Err(()),
         }
@@ -135,8 +137,57 @@ impl FromStr for Team {
 }
 
 // helper function to determine the game status
-fn check_game_progression(board: &Board) -> Status {
-    todo!()
+fn check_game_progression(board: &Board) -> Option<Team> {
+    let rows = 4;
+    let cols = 4;
+
+    fn check_line(
+        grid: &[[Cell; 6]; 5],
+        start_row: usize,
+        start_col: usize,
+        delta_row: isize,
+        delta_col: isize,
+        team_cell: Cell,
+    ) -> bool {
+        for i in 0..4 {
+            let row = start_row as isize + i * delta_row;
+            let col = start_col as isize + i * delta_col;
+
+            if row < 0
+                || !(0..=4).contains(&row)
+                || !(1..=4).contains(&col)
+                || grid[row as usize][col as usize] != team_cell
+            {
+                return false;
+            }
+        }
+        true
+    }
+
+    for row in 0..rows {
+        for col in 1..=cols {
+            if let Cell::Empty = board.grid[row][col] {
+                continue;
+            }
+
+            let current_cell = board.grid[row][col];
+            let team = match current_cell {
+                Cell::Milk => Team::Milk,
+                Cell::Cookie => Team::Cookie,
+                _ => continue,
+            };
+            if (current_cell == Cell::Cookie || current_cell == Cell::Milk)
+                && (check_line(&board.grid, row, col, 0, 1, current_cell)
+                    || check_line(&board.grid, row, col, 1, 0, current_cell)
+                    || check_line(&board.grid, row, col, 1, 1, current_cell)
+                    || check_line(&board.grid, row, col, 1, -1, current_cell))
+            {
+                return Some(team);
+            }
+        }
+    }
+
+    None
 }
 
 // Day 12 Task 1 Handler - current board state, gets the current state of the board
@@ -173,19 +224,35 @@ pub async fn day12_post_make_move(
         _ => return (StatusCode::BAD_REQUEST).into_response(),
     };
 
-    let game = state.game.read().await;
+    let mut game = state.game.write().await;
+
+    if game.board.make_move(team, column).is_err() {
+        return (StatusCode::SERVICE_UNAVAILABLE, game.board.to_string()).into_response();
+    }
 
     match check_game_progression(&game.board) {
-        Status::Winner => {
-            return (StatusCode::SERVICE_UNAVAILABLE).into_response();
+        Some(Team::Cookie) => {
+            let response_body = format!("{}\n🍪 wins!", game.board);
+            return (StatusCode::SERVICE_UNAVAILABLE, response_body).into_response();
         }
-        Status::Draw => {
-            return (StatusCode::SERVICE_UNAVAILABLE).into_response();
+        Some(Team::Milk) => {
+            let response_body = format!("{}\n🥛 wins!", game.board);
+            return (StatusCode::SERVICE_UNAVAILABLE, response_body).into_response();
         }
-        Status::Ongoing => {
-            let mut game = state.game.write().await;
-            *game = Game::make_move(team, column);
-            return (StatusCode::OK).into_response();
+        None => {
+            let is_full = game
+                .board
+                .grid
+                .iter()
+                .flat_map(|row| row.iter())
+                .all(|&cell| cell != Cell::Empty);
+
+            if is_full {
+                let response_body = format!("{}\nNo winner.", game.board);
+                return (StatusCode::SERVICE_UNAVAILABLE, response_body).into_response();
+            }
         }
     }
+
+    (StatusCode::OK, game.board.to_string()).into_response()
 }
