@@ -77,7 +77,8 @@ pub async fn day12_post_play_game_place_cookie_column_1_responds_with_board_stat
 }
 
 #[tokio::test]
-pub async fn day12_post_play_game_returns_board_state_and_503_service_unavailable_if_straight_row_winner() {
+pub async fn day12_post_play_game_returns_board_state_and_503_service_unavailable_if_straight_row_winner(
+) {
     // Arrange
     let app = spawn_app().await;
 

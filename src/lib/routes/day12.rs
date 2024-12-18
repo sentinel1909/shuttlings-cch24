@@ -125,7 +125,7 @@ impl Default for Game {
 }
 
 // Day 12 data structure - an enum type to represent the player teams
-#[derive(Debug, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, PartialEq)]
 pub enum Team {
     Milk,
     Cookie,
@@ -146,7 +146,7 @@ impl FromStr for Team {
 }
 
 // helper function to determine the game status
-fn check_game_progression(board: &Board) -> Option<Team> {
+fn check_game_progression(board: &Board) -> Status {
     let rows = 4;
     let cols = 4;
 
@@ -180,23 +180,33 @@ fn check_game_progression(board: &Board) -> Option<Team> {
             }
 
             let current_cell = board.grid[row][col];
-            let team = match current_cell {
-                Cell::Milk => Team::Milk,
-                Cell::Cookie => Team::Cookie,
-                _ => continue,
-            };
+
             if (current_cell == Cell::Cookie || current_cell == Cell::Milk)
                 && (check_line(&board.grid, row, col, 0, 1, current_cell)
                     || check_line(&board.grid, row, col, 1, 0, current_cell)
                     || check_line(&board.grid, row, col, 1, 1, current_cell)
                     || check_line(&board.grid, row, col, 1, -1, current_cell))
             {
-                return Some(team);
+                return Status::Winner(match current_cell {
+                    Cell::Milk => Team::Milk,
+                    Cell::Cookie => Team::Cookie,
+                    _ => unreachable!(),
+                });
             }
         }
     }
 
-    None
+    let is_full = board
+        .grid
+        .iter()
+        .flat_map(|row| row.iter())
+        .all(|&cell| cell != Cell::Empty);
+
+    if is_full {
+        Status::Draw
+    } else {
+        Status::Ongoing
+    }
 }
 
 // Day 12 Task 1 Handler - current board state, gets the current state of the board
@@ -204,8 +214,24 @@ fn check_game_progression(board: &Board) -> Option<Team> {
 #[tracing::instrument(name = "Day 12 Task 1 Handler - Board State", skip(state))]
 pub async fn day12_get_board_state(State(state): State<AppState>) -> impl IntoResponse {
     let game = state.game.read().await;
-    let response_body = format! {"{}", game.board};
-    response_body
+    let status_message = match &game.status {
+        Status::Winner(winning_team) => format!(
+            "{} wins!",
+            if *winning_team == Team::Cookie {
+                "🍪"
+            } else {
+                "🥛"
+            }
+        ),
+        Status::Draw => "No winner.".to_string(),
+        Status::Ongoing => "".to_string(), // No message for ongoing games
+    };
+    let response_body = if status_message.is_empty() {
+        format!("{}", game.board)
+    } else {
+        format!("{}\n{}", game.board, status_message)
+    };
+    (StatusCode::OK, response_body).into_response()
 }
 
 // Day 12 Task 1 Handler - reset the board to an empty state and return it
@@ -214,7 +240,7 @@ pub async fn day12_get_board_state(State(state): State<AppState>) -> impl IntoRe
 pub async fn day12_post_reset_board(State(state): State<AppState>) -> impl IntoResponse {
     let mut game = state.game.write().await;
     *game = Game::default();
-    let response_body = format! {"{}", game.board};
+    let response_body = format!("{}", game.board);
     response_body
 }
 
@@ -240,7 +266,7 @@ pub async fn day12_post_play_game(
     match &game.status {
         Status::Winner(winning_team) => {
             let response_body = format!(
-                "{}\n{} wins!",
+                "{}{} wins!",
                 game.board,
                 if *winning_team == Team::Cookie {
                     "🍪"
@@ -251,42 +277,37 @@ pub async fn day12_post_play_game(
             return (StatusCode::SERVICE_UNAVAILABLE, response_body).into_response();
         }
         Status::Draw => {
-            let response_body = format!("{}\nNo winner.", game.board);
+            let response_body = format!("{}No winner.", game.board);
             return (StatusCode::SERVICE_UNAVAILABLE, response_body).into_response();
         }
         Status::Ongoing => {}
     }
 
     if game.board.make_move(team, column).is_err() {
-        let response_body = format! {"{}", game.board};
+        let response_body = format!("{}", game.board);
         return (StatusCode::SERVICE_UNAVAILABLE, response_body).into_response();
     }
 
     match check_game_progression(&game.board) {
-        Some(Team::Cookie) => {
-            game.status = Status::Winner(Team::Cookie);
-            let response_body = format!("{}\n🍪 wins!", game.board);
+        Status::Winner(winning_team) => {
+            game.status = Status::Winner(winning_team.clone());
+            let response_body = format!(
+                "{}{}",
+                game.board,
+                if winning_team == Team::Cookie {
+                    "🍪"
+                } else {
+                    "🥛"
+                }
+            );
             return (StatusCode::SERVICE_UNAVAILABLE, response_body).into_response();
         }
-        Some(Team::Milk) => {
-            game.status = Status::Winner(Team::Milk);
-            let response_body = format!("{}\n🥛 wins!", game.board);
-            return (StatusCode::SERVICE_UNAVAILABLE, response_body).into_response();
+        Status::Draw => {
+            game.status = Status::Draw;
+            let response_body = format!("{}No winner.", game.board);
+            return (StatusCode::OK, response_body).into_response();
         }
-        None => {
-            let is_full = game
-                .board
-                .grid
-                .iter()
-                .flat_map(|row| row.iter())
-                .all(|&cell| cell != Cell::Empty);
-
-            if is_full {
-                game.status = Status::Draw;
-                let response_body = format!("{}\nNo winner.", game.board);
-                return (StatusCode::SERVICE_UNAVAILABLE, response_body).into_response();
-            }
-        }
+        Status::Ongoing => {}
     }
 
     let response_body = format!("{}", game.board);
