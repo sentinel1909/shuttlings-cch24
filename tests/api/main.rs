@@ -2,6 +2,7 @@
 
 // module declarations
 mod day12;
+mod day16;
 mod day2;
 mod day5;
 mod day9;
