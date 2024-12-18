@@ -229,7 +229,7 @@ pub async fn day12_get_board_state(State(state): State<AppState>) -> impl IntoRe
     let response_body = if status_message.is_empty() {
         format!("{}", game.board)
     } else {
-        format!("{}\n{}", game.board, status_message)
+        format!("{}{}", game.board, status_message)
     };
     (StatusCode::OK, response_body).into_response()
 }
@@ -266,7 +266,7 @@ pub async fn day12_post_play_game(
     match &game.status {
         Status::Winner(winning_team) => {
             let response_body = format!(
-                "{}{} wins!",
+                "{}\n{} wins!",
                 game.board,
                 if *winning_team == Team::Cookie {
                     "🍪"
@@ -292,19 +292,19 @@ pub async fn day12_post_play_game(
         Status::Winner(winning_team) => {
             game.status = Status::Winner(winning_team.clone());
             let response_body = format!(
-                "{}{}",
+                "{}\n{}",
                 game.board,
                 if winning_team == Team::Cookie {
-                    "🍪"
+                    "🍪 wins!"
                 } else {
-                    "🥛"
+                    "🥛 wins!"
                 }
             );
             return (StatusCode::SERVICE_UNAVAILABLE, response_body).into_response();
         }
         Status::Draw => {
             game.status = Status::Draw;
-            let response_body = format!("{}No winner.", game.board);
+            let response_body = format!("{}\nNo winner.", game.board);
             return (StatusCode::OK, response_body).into_response();
         }
         Status::Ongoing => {}
