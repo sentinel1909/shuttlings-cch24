@@ -3,7 +3,7 @@
 // dependencies
 use crate::routes::day12::Game;
 use crate::routes::day12::{day12_get_board_state, day12_post_play_game, day12_post_reset_board};
-use crate::routes::day16::day16_task1;
+use crate::routes::day16::{day16_task1_wrap, day16_task1_unwrap};
 use crate::routes::day2::{day2_task1, day2_task2};
 use crate::routes::day5::day5_task1;
 use crate::routes::day9::day9_tasks;
@@ -22,7 +22,7 @@ use tokio::net::TcpListener;
 use tokio::sync::RwLock;
 use tokio::time::Duration;
 use tower::ServiceBuilder;
-use tower_cookies::{Cookie, CookieManagerLayer, Cookies};
+use tower_cookies::CookieManagerLayer;
 use tower_http::{
     request_id::{PropagateRequestIdLayer, SetRequestIdLayer},
     trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer},
@@ -80,7 +80,8 @@ impl Application {
             .route("/12/board", get(day12_get_board_state))
             .route("/12/reset", post(day12_post_reset_board))
             .route("/12/place/:team/:column", post(day12_post_play_game))
-            .route("/16/wrap", post(day16_task1))
+            .route("/16/wrap", post(day16_task1_wrap))
+            .route("/16/unwrap", get(day16_task1_unwrap))
             .with_state(state)
             .layer(CookieManagerLayer::new())
             .layer(
