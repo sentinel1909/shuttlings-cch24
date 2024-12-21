@@ -21,6 +21,7 @@ use tokio::net::TcpListener;
 use tokio::sync::RwLock;
 use tokio::time::Duration;
 use tower::ServiceBuilder;
+use tower_cookies::CookieManagerLayer;
 use tower_http::{
     request_id::{PropagateRequestIdLayer, SetRequestIdLayer},
     trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer},
@@ -79,6 +80,7 @@ impl Application {
             .route("/12/reset", post(day12_post_reset_board))
             .route("/12/place/:team/:column", post(day12_post_place_item))
             .with_state(state)
+            .layer(CookieManagerLayer::new())
             .layer(
                 ServiceBuilder::new()
                     .layer(SetRequestIdLayer::new(
