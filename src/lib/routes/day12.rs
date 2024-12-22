@@ -8,7 +8,7 @@ use axum::{
     response::IntoResponse,
 };
 use axum_macros::debug_handler;
-use std::fmt::{Display, Write};
+use std::fmt::{Display, Formatter, Result, Write};
 use std::str::FromStr;
 
 // struct type to represent the grid of tiles
@@ -28,7 +28,7 @@ pub enum Outcome {
 
 // implement the Display trait for the Outcome type
 impl Display for Outcome {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         let o = match self {
             Self::Cookie => "🍪 wins!",
             Self::Milk => "🥛 wins!",
@@ -96,12 +96,11 @@ impl Game {
         };
         *find_tile = tile;
 
-        let is_full = self
+        let is_full = !self
             .board
             .iter()
             .flatten()
-            .find(|&&t| t == Tile::Empty)
-            .is_none();
+            .any(|t| *t == Tile::Empty);
 
         if is_full {
             self.status = Some(Outcome::Neither);
@@ -128,7 +127,7 @@ impl Default for Game {
 
 // implement the Display trait for the Game type
 impl Display for Game {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         let wall = '⬜';
         for y in (0..4).rev() {
             f.write_char(wall)?;
@@ -160,7 +159,7 @@ pub enum Tile {
 
 // implement the Display trait for the Tile type
 impl Display for Tile {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         let t = match self {
             Self::Empty => '⬛',
             Self::Cookie => '🍪',
@@ -171,11 +170,11 @@ impl Display for Tile {
 }
 
 // implement the FromStr trait for the Team type, used to convert the path team path paramter into
-// the Team enum type
+// the Tile enum type
 impl FromStr for Tile {
     type Err = ();
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
         match s {
             "cookie" => Ok(Tile::Cookie),
             "milk" => Ok(Tile::Milk),
