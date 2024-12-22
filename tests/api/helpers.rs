@@ -52,6 +52,11 @@ pub async fn spawn_app() -> TestApp {
         .await
         .expect("Unable to obtain a test database connection pool.");
 
+    sqlx::migrate!("./migrations")
+        .run(&pool)
+        .await
+        .expect("Unable to run database migrations");
+
     // build the app for testing
     let app_state = AppState::new(5, 1, pool);
     let application = Application::build(app_state.clone());

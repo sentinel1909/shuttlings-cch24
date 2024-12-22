@@ -4,6 +4,7 @@
 use crate::routes::day12::Game;
 use crate::routes::day12::{day12_post_place_item, day12_post_reset_board, day_12_get_board_state};
 use crate::routes::day16::{day16_get_unwrap, day16_post_wrap};
+use crate::routes::day19::{day19_get_reset, day19_post_draft};
 use crate::routes::day2::{day2_task1, day2_task2};
 use crate::routes::day5::day5_task1;
 use crate::routes::day9::day9_tasks;
@@ -34,7 +35,7 @@ use tracing::Level;
 pub struct AppState {
     pub rate_limiter: Arc<RwLock<RateLimiter>>,
     pub game: Arc<RwLock<Game>>,
-    pub db: Arc<PgPool>,
+    pub db: PgPool,
 }
 
 // methods for the AppState type
@@ -51,7 +52,7 @@ impl AppState {
         Self {
             rate_limiter: Arc::new(RwLock::new(rate_limiter)),
             game: Arc::new(RwLock::new(game)),
-            db: Arc::new(pool),
+            db: pool,
         }
     }
 }
@@ -85,6 +86,8 @@ impl Application {
             .route("/12/place/:team/:column", post(day12_post_place_item))
             .route("/16/wrap", post(day16_post_wrap))
             .route("/16/unwrap", get(day16_get_unwrap))
+            .route("/19/draft", post(day19_post_draft))
+            .route("/19/reset", get(day19_get_reset))
             .with_state(state)
             .layer(CookieManagerLayer::new())
             .layer(
