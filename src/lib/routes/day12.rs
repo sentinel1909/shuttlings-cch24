@@ -96,11 +96,7 @@ impl Game {
         };
         *find_tile = tile;
 
-        let is_full = !self
-            .board
-            .iter()
-            .flatten()
-            .any(|t| *t == Tile::Empty);
+        let is_full = !self.board.iter().flatten().any(|t| *t == Tile::Empty);
 
         if is_full {
             self.status = Some(Outcome::Neither);
