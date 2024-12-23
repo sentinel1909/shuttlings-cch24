@@ -78,7 +78,7 @@ pub async fn day19_post_draft(
 #[debug_handler]
 #[tracing::instrument(name = "Day 19 Handler - /19/reset Endpoint", skip(state))]
 pub async fn day19_get_reset(State(state): State<AppState>) -> impl IntoResponse {
-    let _query = sqlx::query("DELETE FROM quotes")
+    let _query = sqlx::query("TRUNCATE quotes")
         .execute(&state.db)
         .await
         .unwrap();
