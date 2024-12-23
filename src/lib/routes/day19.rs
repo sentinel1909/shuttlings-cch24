@@ -3,7 +3,7 @@
 // dependencies
 use crate::startup::AppState;
 use axum::{
-    extract::{Json, State},
+    extract::{Json, Path, State},
     http::StatusCode,
     response::IntoResponse,
 };
@@ -30,9 +30,15 @@ pub struct ResponseBody {
     version: i32,
 }
 
-// Day 19 Handler - Task 1, /19/draft endpoint
+// struct type to represent the API endpoint response when an item has been deleted
+#[derive(Serialize)]
+pub struct DeletedResponseBody {
+    quote: String,
+}
+
+// Day 19 Handler - Task 1, /19/draft endpoint, adds an entry into the database
 #[debug_handler]
-#[tracing::instrument(name = "Day 19 Handler - Draft Endpoint", skip(state))]
+#[tracing::instrument(name = "Day 19 Handler - /19/draft Endpoint", skip(state))]
 pub async fn day19_post_draft(
     State(state): State<AppState>,
     Json(payload): Json<Payload>,
@@ -68,9 +74,9 @@ pub async fn day19_post_draft(
     (StatusCode::CREATED, Json(response_body))
 }
 
-// Day 19 Handler - reset endpoint
+// Day 19 Handler - reset endpoint, resets the database and removes all entries
 #[debug_handler]
-#[tracing::instrument(name = "Day 19 Handler - Reset Endpoint", skip(state))]
+#[tracing::instrument(name = "Day 19 Handler - /19/reset Endpoint", skip(state))]
 pub async fn day19_get_reset(State(state): State<AppState>) -> impl IntoResponse {
     let _query = sqlx::query("DELETE FROM quotes")
         .execute(&state.db)
@@ -78,4 +84,108 @@ pub async fn day19_get_reset(State(state): State<AppState>) -> impl IntoResponse
         .unwrap();
 
     StatusCode::OK
+}
+
+// Day 19 Handler - cite/{id} endpoint, returns the quote with the specified id
+#[debug_handler]
+#[tracing::instrument(name = "Day 19 Handler - /19/cite/{id} Endpoint", skip(state))]
+pub async fn day19_get_cite_by_id(
+    State(state): State<AppState>,
+    Path(cite_id): Path<Uuid>,
+) -> impl IntoResponse {
+    let id = cite_id;
+    let query = sqlx::query("SELECT * FROM quotes WHERE id = $1")
+        .bind(id)
+        .fetch_optional(&state.db)
+        .await
+        .unwrap();
+
+    match query {
+        Some(query) => {
+            let id = query.try_get("id").unwrap();
+            let author = query.try_get("author").unwrap();
+            let quote = query.try_get("quote").unwrap();
+            let created_at = query.try_get("created_at").unwrap();
+            let version = query.try_get("version").unwrap();
+
+            let response_body = ResponseBody {
+                id,
+                author,
+                quote,
+                created_at,
+                version,
+            };
+
+            (StatusCode::OK, Json(response_body)).into_response()
+        }
+        None => (StatusCode::NOT_FOUND, "".to_string()).into_response(),
+    }
+}
+
+// Day 19 Handler - cite/{id} endpoint, deletes the quote with the specified id and returns the quote
+#[debug_handler]
+#[tracing::instrument(name = "Day 19 Handler - /19/remove/{id} Endpoint", skip(state))]
+pub async fn day19_delete_by_id(
+    State(state): State<AppState>,
+    Path(delete_id): Path<Uuid>,
+) -> impl IntoResponse {
+    let id = delete_id;
+    let query = sqlx::query("DELETE FROM quotes WHERE id = $1 RETURNING quote")
+        .bind(id)
+        .fetch_optional(&state.db)
+        .await
+        .unwrap();
+
+    match query {
+        Some(query) => {
+            let quote = query.try_get("quote").unwrap();
+
+            let deleted_response_body = DeletedResponseBody { quote };
+
+            (StatusCode::OK, Json(deleted_response_body)).into_response()
+        }
+
+        None => (StatusCode::NOT_FOUND, "".to_string()).into_response(),
+    }
+}
+
+// Day 19 Handler - cite/{id} endpoint, deletes the quote with the specified id and returns the quote
+#[debug_handler]
+#[tracing::instrument(name = "Day 19 Handler - /19/undo/{id} Endpoint", skip(state))]
+pub async fn day19_update_by_id(
+    State(state): State<AppState>,
+    Path(undo_id): Path<Uuid>,
+    Json(payload): Json<Payload>,
+) -> impl IntoResponse {
+    let id = undo_id;
+    let revised_author = payload.author;
+    let revised_quote = payload.quote;
+    let query = sqlx::query("UPDATE quotes SET (author, quote, version) = ($1, $2, version+1) WHERE id = $3 RETURNING *")
+        .bind(revised_author)
+        .bind(revised_quote)
+        .bind(id)
+        .fetch_optional(&state.db)
+        .await
+        .unwrap();
+
+    match query {
+        Some(query) => {
+            let id = query.try_get("id").unwrap();
+            let author = query.try_get("author").unwrap();
+            let quote = query.try_get("quote").unwrap();
+            let created_at = query.try_get("created_at").unwrap();
+            let version = query.try_get("version").unwrap();
+
+            let response_body = ResponseBody {
+                id,
+                author,
+                quote,
+                created_at,
+                version,
+            };
+
+            (StatusCode::OK, Json(response_body)).into_response()
+        }
+        None => (StatusCode::NOT_FOUND, "".to_string()).into_response(),
+    }
 }

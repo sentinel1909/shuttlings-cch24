@@ -4,12 +4,10 @@
 use reqwest::Client;
 use shuttlings_cch24::telemetry::{get_subscriber, init_subscriber};
 use shuttlings_cch24::{AppState, Application};
-use sqlx::PgPool;
 use std::env::var;
 use std::io::{sink, stdout};
 use std::net::TcpListener;
 use std::sync::LazyLock;
-use testcontainers_modules::{postgres::Postgres, testcontainers::runners::AsyncRunner};
 
 // static constant which creates one instance of tracing
 static TRACING: LazyLock<()> = LazyLock::new(|| {
@@ -36,26 +34,6 @@ pub struct TestApp {
 pub async fn spawn_app() -> TestApp {
     // setup tracing
     LazyLock::force(&TRACING);
-
-    // initialize the database
-    let node = Postgres::default()
-        .start()
-        .await
-        .expect("Unable to obtain a testcontainers Postgres instance");
-    let connection_string = &format!(
-        "postgres://postgres:postgres@127.0.0.1:{}/postgres",
-        node.get_host_port_ipv4(5432)
-            .await
-            .expect("Unable to obtain a database connection string.")
-    );
-    let pool = PgPool::connect(connection_string)
-        .await
-        .expect("Unable to obtain a test database connection pool.");
-
-    sqlx::migrate!("./migrations")
-        .run(&pool)
-        .await
-        .expect("Unable to run database migrations");
 
     // build the app for testing
     let app_state = AppState::new(5, 1, pool);

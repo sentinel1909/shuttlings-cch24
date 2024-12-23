@@ -8,6 +8,7 @@ use serde_json::json;
 #[tokio::test]
 async fn draft_endpoint_adds_quote_with_uuid_and_returns_the_quote_with_201_created() {
     // Arrange
+
     let app = spawn_app().await;
     let request_body = json!({
       "author":"Santa",
