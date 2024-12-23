@@ -39,7 +39,7 @@ pub struct DeletedResponseBody {
 // Day 19 Handler - Task 1, /19/draft endpoint, adds an entry into the database
 #[debug_handler]
 #[tracing::instrument(name = "Day 19 Handler - /19/draft Endpoint", skip(state))]
-pub async fn day19_post_draft(
+pub async fn day19_draft(
     State(state): State<AppState>,
     Json(payload): Json<Payload>,
 ) -> impl IntoResponse {
@@ -77,7 +77,7 @@ pub async fn day19_post_draft(
 // Day 19 Handler - reset endpoint, resets the database and removes all entries
 #[debug_handler]
 #[tracing::instrument(name = "Day 19 Handler - /19/reset Endpoint", skip(state))]
-pub async fn day19_get_reset(State(state): State<AppState>) -> impl IntoResponse {
+pub async fn day19_reset(State(state): State<AppState>) -> impl IntoResponse {
     let _query = sqlx::query("TRUNCATE quotes")
         .execute(&state.db)
         .await
@@ -89,7 +89,7 @@ pub async fn day19_get_reset(State(state): State<AppState>) -> impl IntoResponse
 // Day 19 Handler - cite/{id} endpoint, returns the quote with the specified id
 #[debug_handler]
 #[tracing::instrument(name = "Day 19 Handler - /19/cite/{id} Endpoint", skip(state))]
-pub async fn day19_get_cite_by_id(
+pub async fn day19_cite_by_id(
     State(state): State<AppState>,
     Path(cite_id): Path<Uuid>,
 ) -> impl IntoResponse {
@@ -125,7 +125,7 @@ pub async fn day19_get_cite_by_id(
 // Day 19 Handler - cite/{id} endpoint, deletes the quote with the specified id and returns the quote
 #[debug_handler]
 #[tracing::instrument(name = "Day 19 Handler - /19/remove/{id} Endpoint", skip(state))]
-pub async fn day19_delete_by_id(
+pub async fn day19_remove_by_id(
     State(state): State<AppState>,
     Path(delete_id): Path<Uuid>,
 ) -> impl IntoResponse {
@@ -152,7 +152,7 @@ pub async fn day19_delete_by_id(
 // Day 19 Handler - cite/{id} endpoint, deletes the quote with the specified id and returns the quote
 #[debug_handler]
 #[tracing::instrument(name = "Day 19 Handler - /19/undo/{id} Endpoint", skip(state))]
-pub async fn day19_update_by_id(
+pub async fn day19_undo_by_id(
     State(state): State<AppState>,
     Path(undo_id): Path<Uuid>,
     Json(payload): Json<Payload>,

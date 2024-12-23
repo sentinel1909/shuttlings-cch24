@@ -5,7 +5,7 @@ use crate::routes::day12::Game;
 use crate::routes::day12::{day12_post_place_item, day12_post_reset_board, day_12_get_board_state};
 use crate::routes::day16::{day16_get_unwrap, day16_post_wrap};
 use crate::routes::day19::{
-    day19_delete_by_id, day19_get_cite_by_id, day19_get_reset, day19_post_draft, day19_update_by_id,
+    day19_cite_by_id, day19_draft, day19_remove_by_id, day19_reset, day19_undo_by_id,
 };
 use crate::routes::day2::{day2_task1, day2_task2};
 use crate::routes::day5::day5_task1;
@@ -88,11 +88,11 @@ impl Application {
             .route("/12/place/:team/:column", post(day12_post_place_item))
             .route("/16/wrap", post(day16_post_wrap))
             .route("/16/unwrap", get(day16_get_unwrap))
-            .route("/19/draft", post(day19_post_draft))
-            .route("/19/reset", get(day19_get_reset))
-            .route("/19/cite/:id", get(day19_get_cite_by_id))
-            .route("/19/remove/:id", delete(day19_delete_by_id))
-            .route("/19/undo/:id", put(day19_update_by_id))
+            .route("/19/draft", post(day19_draft))
+            .route("/19/reset", post(day19_reset))
+            .route("/19/cite/:id", get(day19_cite_by_id))
+            .route("/19/remove/:id", delete(day19_remove_by_id))
+            .route("/19/undo/:id", put(day19_undo_by_id))
             .with_state(state)
             .layer(CookieManagerLayer::new())
             .layer(
