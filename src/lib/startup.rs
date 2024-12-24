@@ -29,6 +29,7 @@ use tower::ServiceBuilder;
 use tower_cookies::CookieManagerLayer;
 use tower_http::{
     request_id::{PropagateRequestIdLayer, SetRequestIdLayer},
+    services::ServeDir,
     trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer},
 };
 use tracing::Level;
@@ -75,8 +76,16 @@ impl Application {
                     .level(Level::INFO),
             )
             .on_response(DefaultOnResponse::new().include_headers(true));
+
+        // serve the assets for Day 23
+        let assets_service = ServiceBuilder::new()
+            .layer(&trace_layer)
+            .service(ServeDir::new("assets"));
+
         let x_request_id = HeaderName::from_static("x-request-id");
-        let router = Router::new()
+        
+        // api routes
+        let api_routes = Router::new()
             .route("/", get(day_minus_one_task1))
             .route("/-1/seek", get(day_minus_one_task2))
             .route("/2/dest", get(day2_task1))
@@ -104,6 +113,11 @@ impl Application {
                     .layer(trace_layer)
                     .layer(PropagateRequestIdLayer::new(x_request_id)),
             );
+
+        // final router, including api routes and assets service
+        let router = Router::new()
+            .nest_service("/", api_routes)
+            .nest_service("/assets", assets_service);
         Self(router)
     }
 

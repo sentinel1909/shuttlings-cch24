@@ -40,14 +40,16 @@ pub async fn day19_draft(
     let id = Uuid::new_v4();
     let created_at: DateTime<Utc> = Utc::now();
 
-    let query = sqlx::query("INSERT INTO quotes (id, author, quote, created_at) VALUES ($1, $2, $3, $4) RETURNING *")
-      .bind(id)
-      .bind(payload.author)
-      .bind(payload.quote)
-      .bind(created_at)
-      .fetch_one(&state.db)
-      .await
-      .unwrap();
+    let query = sqlx::query(
+        "INSERT INTO quotes (id, author, quote, created_at) VALUES ($1, $2, $3, $4) RETURNING *",
+    )
+    .bind(id)
+    .bind(payload.author)
+    .bind(payload.quote)
+    .bind(created_at)
+    .fetch_one(&state.db)
+    .await
+    .unwrap();
 
     let id: Uuid = query.try_get("id").unwrap();
     let author: String = query.try_get("author").unwrap();

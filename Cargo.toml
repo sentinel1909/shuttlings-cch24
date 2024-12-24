@@ -36,7 +36,7 @@ tokio = { version = "1.41.1", features = [ "net", "time" ] }
 toml = "0.8.19"
 tower = "0.5.2"
 tower-cookies = "0.10.0"
-tower-http = { version = "0.6.2", features = [ "request-id", "trace", "util" ] }
+tower-http = { version = "0.6.2", features = ["fs", "request-id", "trace", "util"] }
 tracing = { version = "0.1.41", features = ["log"] }
 tracing-bunyan-formatter = "0.3.10"
 tracing-log = "0.2.0"
