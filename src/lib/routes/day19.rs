@@ -127,9 +127,9 @@ pub async fn day19_cite_by_id(
 #[tracing::instrument(name = "Day 19 Handler - /19/remove/{id} Endpoint", skip(state))]
 pub async fn day19_remove_by_id(
     State(state): State<AppState>,
-    Path(delete_id): Path<Uuid>,
+    Path(remove_id): Path<Uuid>,
 ) -> impl IntoResponse {
-    let id = delete_id;
+    let id = remove_id;
     let query = sqlx::query("DELETE FROM quotes WHERE id = $1 RETURNING quote")
         .bind(id)
         .fetch_optional(&state.db)

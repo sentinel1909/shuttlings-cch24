@@ -4,12 +4,13 @@
 use reqwest::Client;
 use shuttlings_cch24::telemetry::{get_subscriber, init_subscriber};
 use shuttlings_cch24::{AppState, Application};
-use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
+use sqlx::{postgres::PgConnectOptions, Connection, Executor, PgConnection, PgPool};
 use std::env::var;
 use std::io::{sink, stdout};
 use std::net::TcpListener;
 use std::sync::LazyLock;
 use testcontainers_modules::{postgres, testcontainers::runners::AsyncRunner};
+use uuid::Uuid;
 
 // static constant which creates one instance of tracing
 static TRACING: LazyLock<()> = LazyLock::new(|| {
@@ -23,6 +24,69 @@ static TRACING: LazyLock<()> = LazyLock::new(|| {
         init_subscriber(subscriber);
     }
 });
+
+// struct type to represent the test database settings
+#[derive(Clone, Debug)]
+struct DatabaseSettings {
+    pub username: String,
+    pub password: String,
+    pub port: u16,
+    pub host: String,
+    pub database_name: String,
+}
+
+// methods for the DatabaseSettings type
+impl DatabaseSettings {
+    pub fn new() -> Self {
+        DatabaseSettings {
+            username: "postgres".into(),
+            password: "postgres".into(),
+            port: 5432,
+            host: "localhost".into(),
+            database_name: Uuid::new_v4().to_string(),
+        }
+    }
+
+    pub fn without_db(&self) -> PgConnectOptions {
+        PgConnectOptions::new()
+            .host(&self.host)
+            .username(&self.username)
+            .password(&self.password)
+            .port(self.port)
+    }
+
+    pub fn with_db(&self) -> PgConnectOptions {
+        self.without_db().database(&self.database_name)
+    }
+}
+
+// function to configure the testing database
+async fn configure_database(config: &DatabaseSettings) -> PgPool {
+    let _container = postgres::Postgres::default()
+        .start()
+        .await
+        .expect("Unable to start testcontainers Postgres image.");
+
+    let mut connection = PgConnection::connect_with(&config.without_db())
+        .await
+        .expect("Failed to connect to Postgres.");
+
+    connection
+        .execute(format!(r#"CREATE DATABASE "{}";"#, config.database_name).as_str())
+        .await
+        .expect("Failed to create database.");
+
+    let connection_pool = PgPool::connect_with(config.with_db())
+        .await
+        .expect("Failed to connect to Postgres.");
+
+    sqlx::migrate!("./migrations")
+        .run(&connection_pool)
+        .await
+        .expect("Failed to migrate the database");
+
+    connection_pool
+}
 
 // struct type which models a test application
 #[allow(dead_code)]
@@ -38,24 +102,8 @@ pub async fn spawn_app() -> TestApp {
     LazyLock::force(&TRACING);
 
     // setup the database
-    let _container = postgres::Postgres::default()
-        .start()
-        .await
-        .expect("Unable to start testcontainers Postgres image.");
-    let pool = PgPoolOptions::new()
-        .acquire_timeout(std::time::Duration::from_secs(2))
-        .connect_lazy_with(
-            PgConnectOptions::new()
-                .host("localhost")
-                .username("postgres")
-                .password("postgres")
-                .port(5432),
-        );
-
-    sqlx::migrate!("./migrations")
-        .run(&pool)
-        .await
-        .expect("Unable to run the database migrations");
+    let db_config = DatabaseSettings::new();
+    let pool = configure_database(&db_config).await;
 
     // build the app for testing
     let milk_capacity = 5;
