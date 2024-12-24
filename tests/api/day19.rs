@@ -98,8 +98,7 @@ async fn day19_undo_endpoint_updates_author_and_quote_returns_the_updated_quote_
     // Assert - updated response
     assert!(undo_response.status().is_success());
     let undo_response_body = undo_response.bytes().await.unwrap();
-    let undo_response_data: ApiResponse =
-        serde_json::from_slice(&undo_response_body).unwrap();
+    let undo_response_data: ApiResponse = serde_json::from_slice(&undo_response_body).unwrap();
 
     // Assert the static fields for the updated response
     assert_eq!(undo_response_data.author, "Santa");
@@ -147,8 +146,8 @@ async fn day19_reset_endpoint_clears_the_quotes_table_and_returns_200_ok() {
     // Assert
     assert!(reset_response.status().is_success());
     let reset_response_body = reset_response
-      .text()
-      .await
-      .expect("Failed to read response body.");
+        .text()
+        .await
+        .expect("Failed to read response body.");
     assert!(reset_response_body.is_empty());
 }

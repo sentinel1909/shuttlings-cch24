@@ -30,12 +30,6 @@ pub struct ResponseBody {
     version: i32,
 }
 
-// struct type to represent the API endpoint response when an item has been deleted
-#[derive(Serialize)]
-pub struct DeletedResponseBody {
-    quote: String,
-}
-
 // Day 19 Handler - Task 1, /19/draft endpoint, adds an entry into the database
 #[debug_handler]
 #[tracing::instrument(name = "Day 19 Handler - /19/draft Endpoint", skip(state))]
@@ -45,14 +39,12 @@ pub async fn day19_draft(
 ) -> impl IntoResponse {
     let id = Uuid::new_v4();
     let created_at: DateTime<Utc> = Utc::now();
-    let version = 1;
 
-    let query = sqlx::query("INSERT INTO quotes (id, author, quote, created_at, version) VALUES ($1, $2, $3, $4, $5) RETURNING *")
+    let query = sqlx::query("INSERT INTO quotes (id, author, quote, created_at) VALUES ($1, $2, $3, $4) RETURNING *")
       .bind(id)
       .bind(payload.author)
       .bind(payload.quote)
       .bind(created_at)
-      .bind(version)
       .fetch_one(&state.db)
       .await
       .unwrap();
@@ -130,7 +122,7 @@ pub async fn day19_remove_by_id(
     Path(remove_id): Path<Uuid>,
 ) -> impl IntoResponse {
     let id = remove_id;
-    let query = sqlx::query("DELETE FROM quotes WHERE id = $1 RETURNING quote")
+    let query = sqlx::query("DELETE FROM quotes WHERE id = $1 RETURNING *")
         .bind(id)
         .fetch_optional(&state.db)
         .await
@@ -138,9 +130,19 @@ pub async fn day19_remove_by_id(
 
     match query {
         Some(query) => {
+            let id = query.try_get("id").unwrap();
+            let author = query.try_get("author").unwrap();
             let quote = query.try_get("quote").unwrap();
+            let created_at = query.try_get("created_at").unwrap();
+            let version = query.try_get("version").unwrap();
 
-            let deleted_response_body = DeletedResponseBody { quote };
+            let deleted_response_body = ResponseBody {
+                id,
+                author,
+                quote,
+                created_at,
+                version,
+            };
 
             (StatusCode::OK, Json(deleted_response_body)).into_response()
         }
