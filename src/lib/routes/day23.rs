@@ -21,22 +21,48 @@ pub async fn day23_task2() -> impl IntoResponse {
 #[debug_handler]
 #[tracing::instrument(name = "Day 23, Task 3 handler /23/present/{color}")]
 pub async fn day23_task3(Path(color): Path<String>) -> impl IntoResponse {
-   let mut color_map = HashMap::new();
-   color_map.insert("red", "blue");
-   color_map.insert("blue", "purple");
-   color_map.insert("purple", "red");
+    let mut color_map = HashMap::new();
+    color_map.insert("red", "blue");
+    color_map.insert("blue", "purple");
+    color_map.insert("purple", "red");
 
-  if let Some(&next_color) = color_map.get(color.as_str()) {
+    if let Some(&next_color) = color_map.get(color.as_str()) {
+        let html = format!(
+            r#"<div class="present {}" hx-get="/23/present/{}" hx-swap="outerHTML">
+                    <div class="ribbon"></div>
+                    <div class="ribbon"></div>
+                    <div class="ribbon"></div>
+                    <div class="ribbon"></div>
+                </div>"#,
+            color, next_color
+        );
+        Html(html).into_response()
+    } else {
+        (StatusCode::IM_A_TEAPOT).into_response()
+    }
+}
+
+#[debug_handler]
+#[tracing::instrument(name = "Day 23, Task 4 handler /23/ornament/{state}/{n}")]
+pub async fn day23_task4(Path((state, n)): Path<(String, String)>) -> impl IntoResponse {
+    if state != "on" && state != "off" {
+        return (StatusCode::IM_A_TEAPOT).into_response();
+    }
+
+    let next_state = if state == "on" { "off" } else { "on" };
+
+    let mut class = "ornament".to_string();
+    if state == "on" {
+        class.push(' ');
+        class.push_str("on");
+    }
     let html = format!(
-      r#"<div class="present {}" hx-get="/23/present/{}" hx-swap="outerHTML">
-                    <div class="ribbon"></div>
-                    <div class="ribbon"></div>
-                    <div class="ribbon"></div>
-                    <div class="ribbon"></div>
-                </div>"#, color, next_color
+        r#"
+        <div class="{}" id="ornament{}" hx-trigger="load delay:2s once" hx-get="/23/ornament/{}/{}" hx-swap="outerHTML">
+        </div>
+      "#,
+        class, n, next_state, n
     );
-    Html(html).into_response()
-  } else {
-    (StatusCode::IM_A_TEAPOT).into_response()
-  }
+
+    (StatusCode::OK, Html(html)).into_response()
 }

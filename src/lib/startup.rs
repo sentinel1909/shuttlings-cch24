@@ -8,7 +8,7 @@ use crate::routes::day19::{
     day19_cite_by_id, day19_draft, day19_remove_by_id, day19_reset, day19_undo_by_id,
 };
 use crate::routes::day2::{day2_task1, day2_task2};
-use crate::routes::day23::{day23_task2, day23_task3};
+use crate::routes::day23::{day23_task2, day23_task3, day23_task4};
 use crate::routes::day5::day5_task1;
 use crate::routes::day9::day9_tasks;
 use crate::routes::day_minus_one::{day_minus_one_task1, day_minus_one_task2};
@@ -105,6 +105,7 @@ impl Application {
             .route("/19/undo/:id", put(day19_undo_by_id))
             .route("/23/star", get(day23_task2))
             .route("/23/present/:color", get(day23_task3))
+            .route("/23/ornament/:state/:n", get(day23_task4))
             .with_state(state)
             .layer(CookieManagerLayer::new())
             .layer(
