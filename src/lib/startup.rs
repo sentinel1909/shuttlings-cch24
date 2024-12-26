@@ -7,7 +7,7 @@ use crate::routes::day16::{day16_get_unwrap, day16_post_wrap};
 use crate::routes::day19::{
     day19_cite_by_id, day19_draft, day19_remove_by_id, day19_reset, day19_undo_by_id,
 };
-use crate::routes::day2::{day2_task1, day2_task2};
+use crate::routes::day2::{day2_task1, day2_task2, day2_task3_encrypt, day2_task3_decrypt};
 use crate::routes::day23::{day23_task2, day23_task3, day23_task4};
 use crate::routes::day5::day5_task1;
 use crate::routes::day9::day9_tasks;
@@ -91,6 +91,8 @@ impl Application {
             .route("/-1/seek", get(day_minus_one_task2))
             .route("/2/dest", get(day2_task1))
             .route("/2/key", get(day2_task2))
+            .route("/2/v6/dest", get(day2_task3_encrypt))
+            .route("/2/v6/key", get(day2_task3_decrypt))
             .route("/5/manifest", post(day5_task1))
             .route("/9/milk", post(day9_tasks))
             .route("/12/board", get(day_12_get_board_state))

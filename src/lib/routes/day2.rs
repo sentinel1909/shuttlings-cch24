@@ -1,20 +1,23 @@
 // src/lib/routes/day2.rs
 
+
 // dependencies
 use axum::{extract::Query, response::IntoResponse};
 use axum_macros::{self, debug_handler};
 use serde::Deserialize;
+use std::net::Ipv6Addr;
+use std::str::FromStr;
 
 // struct type to represent the Query parameters for Day 2, Task 1
 #[derive(Deserialize)]
-pub struct InputDay2Task1 {
+pub struct EncryptionParameters {
     pub from: String,
     pub key: String,
 }
 
 // struct type to represent the Query parameters for Day2, Task 2
 #[derive(Deserialize)]
-pub struct InputDay2Task2 {
+pub struct DecryptionParameters {
     pub from: String,
     pub to: String,
 }
@@ -22,7 +25,7 @@ pub struct InputDay2Task2 {
 // Day 2, Task 1 handler
 #[debug_handler]
 #[tracing::instrument(name = "Day 2, Task 1" skip(params))]
-pub async fn day2_task1(params: Query<InputDay2Task1>) -> impl IntoResponse {
+pub async fn day2_task1(params: Query<EncryptionParameters>) -> impl IntoResponse {
     let input = params.0;
     let from = input.from;
     let key = input.key;
@@ -53,7 +56,7 @@ pub async fn day2_task1(params: Query<InputDay2Task1>) -> impl IntoResponse {
 // Day 2, Task 2 handler
 #[debug_handler]
 #[tracing::instrument(name = "Day 2, Task 2", skip(params))]
-pub async fn day2_task2(params: Query<InputDay2Task2>) -> impl IntoResponse {
+pub async fn day2_task2(params: Query<DecryptionParameters>) -> impl IntoResponse {
     let input = params.0;
     let from = input.from;
     let to = input.to;
@@ -80,3 +83,39 @@ pub async fn day2_task2(params: Query<InputDay2Task2>) -> impl IntoResponse {
 
     key_str
 }
+
+// Day 2, Task 3 Encrypt handler
+#[debug_handler]
+#[tracing::instrument(name = "Day 2, Task3 - Encrypt ", skip(params))]
+pub async fn day2_task3_encrypt(params: Query<EncryptionParameters>) -> impl IntoResponse {
+    let from = params.0.from;
+    let key = params.0.key;
+
+    let from_ipv6 = Ipv6Addr::from_str(&from).unwrap().to_bits(); 
+    let key_ipv6 = Ipv6Addr::from_str(&key).unwrap().to_bits();
+
+    let dest_bits = from_ipv6 ^ key_ipv6; 
+
+    let dest = Ipv6Addr::from_bits(dest_bits);
+
+    dest.to_string() 
+
+}
+
+// Day 2, Task 3 Decrypt handler
+#[debug_handler]
+#[tracing::instrument(name = "Day 2, Task3 - Decrypt", skip(params))]
+pub async fn day2_task3_decrypt(params: Query<DecryptionParameters>) -> impl IntoResponse {
+    let from = params.0.from;
+    let to = params.0.to;
+
+    let from_ipv6 = Ipv6Addr::from_str(&from).unwrap().to_bits();
+    let to_ipv6 = Ipv6Addr::from_str(&to).unwrap().to_bits();
+
+    let key_bits = from_ipv6 ^ to_ipv6;
+
+    let key = Ipv6Addr::from(key_bits);
+
+    key.to_string() 
+}
+
