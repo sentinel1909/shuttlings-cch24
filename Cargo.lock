@@ -3058,7 +3058,7 @@ dependencies = [
 
 [[package]]
 name = "shuttlings-cch24"
-version = "0.23.55555"
+version = "0.23.5"
 dependencies = [
  "axum 0.7.9",
  "axum-extra",
