@@ -1,6 +1,5 @@
 // src/lib/routes/day2.rs
 
-
 // dependencies
 use axum::{extract::Query, response::IntoResponse};
 use axum_macros::{self, debug_handler};
@@ -91,15 +90,14 @@ pub async fn day2_task3_encrypt(params: Query<EncryptionParameters>) -> impl Int
     let from = params.0.from;
     let key = params.0.key;
 
-    let from_ipv6 = Ipv6Addr::from_str(&from).unwrap().to_bits(); 
+    let from_ipv6 = Ipv6Addr::from_str(&from).unwrap().to_bits();
     let key_ipv6 = Ipv6Addr::from_str(&key).unwrap().to_bits();
 
-    let dest_bits = from_ipv6 ^ key_ipv6; 
+    let dest_bits = from_ipv6 ^ key_ipv6;
 
     let dest = Ipv6Addr::from_bits(dest_bits);
 
-    dest.to_string() 
-
+    dest.to_string()
 }
 
 // Day 2, Task 3 Decrypt handler
@@ -116,6 +114,5 @@ pub async fn day2_task3_decrypt(params: Query<DecryptionParameters>) -> impl Int
 
     let key = Ipv6Addr::from(key_bits);
 
-    key.to_string() 
+    key.to_string()
 }
-
