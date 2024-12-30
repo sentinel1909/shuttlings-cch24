@@ -26,4 +26,6 @@ My repo of solutions for the Shuttle Christmas Code Hunt 2024.
 
 - 2024-12-24: Day 23, Tasks 1, 2 and 3 completed and verified locally and online.
 
-- 2024-12-25: Day 23, Task 5 completed and verified locally and online.
+- 2024-12-25: Day 23, Task 5 completed and verified locally and online. Day 2 bonus task completed and verified locally and online.
+
+- 2024-12-30: Day 5, Bonus task completed and verified locally and online. Not my solution though, had to review and analyze someone else's
