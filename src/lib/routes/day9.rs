@@ -10,8 +10,10 @@ use axum::{
 use axum_extra::headers::ContentType;
 use axum_extra::TypedHeader;
 use axum_macros::debug_handler;
+use leaky_bucket::RateLimiter;
 use serde::Deserialize;
 use serde_json::json;
+use tokio::time::Duration;
 
 // common conversion factors
 const LITERS_TO_GALLONS: f32 = 3.78541;
@@ -71,4 +73,18 @@ pub async fn day9_tasks(
     }
 
     (StatusCode::OK, "Milk withdrawn\n").into_response()
+}
+
+// Day 9, Bonus Task Handler
+#[debug_handler]
+#[tracing::instrument(name = "Day 9, Bonus Task Handler - Top up the Cup", skip(state))]
+pub async fn day9_bonus(State(state): State<AppState>) -> impl IntoResponse {
+    let mut full_milk_bucket = state.rate_limiter.write().await;
+    *full_milk_bucket = RateLimiter::builder()
+        .initial(5)
+        .max(5)
+        .interval(Duration::from_secs(1))
+        .build();
+
+    StatusCode::OK
 }
